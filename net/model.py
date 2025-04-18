@@ -126,27 +126,14 @@ class DCAM(nn.Module):
 
     def forward(self, x_l, x_r, mask, mode="ii"):
         if mode == 1:
-            # x_l_m = x_l
-
-            # x_l_m = torch.mul(x_r, 1 - mask)
-            # x_r_m = torch.mul(x_r, mask)
-
-            # x_l_m = torch.mul(x_r, mask)
-            # x_r_m = x_l
-
             x_l_m = torch.mul(x_r, 1-mask)
             x_r_m = x_l
-
-
         elif mode == 2:
             x_l_m = x_l
             x_r_m = x_r
         elif mode == 3:
             x_l_m = torch.mul(x_l, mask)
             x_r_m = torch.mul(x_r, 1-mask)
-
-            # x_l_m = x_l
-            # x_r_m = x_r
         elif mode == 4:
             # x_l_m = torch.mul(x_l, mask)
             x_l_m = x_l
@@ -169,7 +156,6 @@ class DSAM(nn.Module):
         # degraded represent
         self.DR = None
         self.channel_align_in = None
-
         self.semantic_extra = None
         self.norm_1 = nn.LayerNorm(d_dim)
         self.norm_2 = nn.LayerNorm(d_dim)
@@ -206,32 +192,12 @@ class DSAM(nn.Module):
         sim_soft_2D = sim_soft.permute(0, 2, 1).view(B, -1, H, W)
         degrad_feat = torch.matmul(sim_soft, dr.transpose(-2, -1)).permute(0, 2, 1).view(
             x_algin.shape).contiguous()  # B HW N * B N C -> B HW C  -> B H W C
-
-        # print(torch.mean(sim_soft_2D.flatten(-2,-1),dim=-1))
-        # print(torch.mean(sim,dim=1))
         '''
             sharing mask generation for consistence to each pixel probability
         '''
-        # mask_v = torch.pow((1 + sim_soft_2D), 2)  ## 2
         mask_v = torch.pow((sim_soft_2D), 3)  ## 2
-        # mask_v = sim_soft_2D  ##
         mask_v, mask_type = torch.max(mask_v, dim=1, keepdim=True)  # B, N, H, W -> B, 1, H, W
-        # print("mask_v:", mask_v.shape)
-        # print("mask_type:", mask_type.shape, mask_type)
-        #
-        # import matplotlib
-        # import matplotlib.pyplot as plt
-        # matplotlib.use('TkAgg')
-        # fig, ax = plt.subplots()
-        # vis_type = mask_type[0] / N
-        # vis_type = vis_type.cpu().detach().numpy()
-        # ax.imshow(vis_type[0, :, :], cmap="bwr")
-        # plt.xticks([])
-        # plt.yticks([])
-        # plt.axis("off")
-        # plt.show()
-        # plt.close()
-        # sys.exit()
+
 
 
         min_val, _ = torch.min(mask_v.view(B, -1), dim=1, keepdim=True)  # B, H*W
@@ -245,16 +211,11 @@ class DSAM(nn.Module):
         mask_v = (mask_v - min_val) / (max_val - min_val)
 
         mask_v = 1 - mask_v
-        # self.show_prob2D(mask_v)
-        # self.train_show_mask(mask_v, inp_img)
-
 
         max_values, indices = torch.max(sim_soft, dim=2)
         _, top_indices = torch.topk(max_values, int(sim_soft.shape[1] / 50), dim=1, largest=True, sorted=False)
 
         results = sim_soft[:, top_indices, :].squeeze(1)
-        # print(sim_soft.shape, results.shape)
-
         return mask_v, self.channel_align_out(degrad_feat), results
 
 ##########################################################################
@@ -465,22 +426,22 @@ class DGIR(nn.Module):
         # decoder layer 1
         self.up4_3cd = Upsample(int(dim * 2 ** 3))  ## From Level 4 to Level 3
         self.reduce_chan_level3cd = nn.Conv2d(int(dim * 2 ** 3), int(dim * 2 ** 2), kernel_size=1, bias=bias)
-        # self.decoder_level3cd = get_clones(
-        #     TransformerBlock(dim=int(dim * 2 ** 2), num_heads=heads[2], ffn_expansion_factor=ffn_expansion_factor,
-        #                      bias=bias, LayerNorm_type=LayerNorm_type), self.num_blocks[2])
+        self.decoder_level3cd = get_clones(
+            TransformerBlock(dim=int(dim * 2 ** 2), num_heads=heads[2], ffn_expansion_factor=ffn_expansion_factor,
+                             bias=bias, LayerNorm_type=LayerNorm_type), self.num_blocks[2])
 
         # decoder layer 2
         self.up3_2cd = Upsample(int(dim * 2 ** 2))
         self.reduce_chan_level2cd = nn.Conv2d(int(dim * 2 ** 2), int(dim * 2 ** 1), kernel_size=1, bias=bias)
-        # self.decoder_level2cd = get_clones(
-        #     TransformerBlock(dim=int(dim * 2 ** 1), num_heads=heads[1], ffn_expansion_factor=ffn_expansion_factor,
-        #                      bias=bias, LayerNorm_type=LayerNorm_type), self.num_blocks[1])
+        self.decoder_level2cd = get_clones(
+            TransformerBlock(dim=int(dim * 2 ** 1), num_heads=heads[1], ffn_expansion_factor=ffn_expansion_factor,
+                             bias=bias, LayerNorm_type=LayerNorm_type), self.num_blocks[1])
 
         # decoder layer 3
         self.up2_1cd = Upsample(int(dim * 2 ** 1))
-        # self.decoder_level1cd = get_clones(
-        #     TransformerBlock(dim=int(dim * 2 ** 1), num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
-        #                      bias=bias, LayerNorm_type=LayerNorm_type), self.num_blocks[0])
+        self.decoder_level1cd = get_clones(
+            TransformerBlock(dim=int(dim * 2 ** 1), num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
+                             bias=bias, LayerNorm_type=LayerNorm_type), self.num_blocks[0])
 
 
         self.decoder_cross3cd = get_clones(DCAM(int(dim * 2 ** 2)), self.num_blocks[2])
@@ -556,8 +517,6 @@ class DGIR(nn.Module):
             feats = tblayer(feats)
         return feats
 
-
-
     def _reset_parameters(self):
         for p in self.parameters():
             # print(p)
@@ -571,16 +530,6 @@ class DGIR(nn.Module):
 
         d2c_semantic_list = []
         c2d_semantic_list = []
-
-        # for i in range(self.num_blocks[0]):
-        #     self.encoder_level1[i].requires_grad=False
-        # for i in range(self.num_blocks[1]):
-        #     self.encoder_level2[i].requires_grad = False
-        # for i in range(self.num_blocks[2]):
-        #     self.encoder_level3[i].requires_grad=False
-        # for i in range(self.num_blocks[3]):
-        #     self.latent[i].requires_grad = False
-
         '''
             degradation to clean encoder
         '''
@@ -619,23 +568,6 @@ class DGIR(nn.Module):
         '''
                 clean to degradation
         '''
-        # for i in range(self.num_blocks[0]):
-        #     self.encoder_level1[i].requires_grad=True
-        # for i in range(self.num_blocks[1]):
-        #     self.encoder_level2[i].requires_grad=True
-        # for i in range(self.num_blocks[2]):
-        #     self.encoder_level3[i].requires_grad=True
-        # for i in range(self.num_blocks[3]):
-        #     self.latent[i].requires_grad = True
-        #
-        # for i in range(self.num_blocks[2]):
-        #     self.decoder_level3[i].requires_grad=False
-        # for i in range(self.num_blocks[1]):
-        #     self.decoder_level2[i].requires_grad = False
-        # for i in range(self.num_blocks[0]):
-        #     self.decoder_level1[i].requires_grad=False
-
-
         # encoder layer 1
         ie_cd1 = self.patch_embed(clean_img)  # (B, 48, H, W)
         # oe_cd1 = self.tb(self.encoder_level1, self.encoder_cross1, ie_cd1, ie_cd1, mask1, 2, True)
@@ -690,14 +622,6 @@ class DGIR(nn.Module):
         '''
             degradation to clean decoder
         '''
-
-        # for i in range(self.num_blocks[2]):
-        #     self.decoder_level3[i].requires_grad=True
-        # for i in range(self.num_blocks[1]):
-        #     self.decoder_level2[i].requires_grad = True
-        # for i in range(self.num_blocks[0]):
-        #     self.decoder_level1[i].requires_grad=True
-
         # decoder layer 1
         id_dc3 = self.up4_3(latent_d2c)
         id_dc3 = torch.cat([id_dc3, ie_dc3], 1)
@@ -728,16 +652,6 @@ class DGIR(nn.Module):
         return d2c, c2d, d2c_semantic_list, c2d_semantic_list
         # return d2c, d2c_semantic_list, c2d_semantic_list, mask1
 
-    # def show_prob2D(self, x):
-    #     b, c, w, h = x.shape
-    #     matplotlib.use('TkAgg')
-    #     fig, ax = plt.subplots()
-    #     # x.clip_(0.4, 1.0)
-    #     vis_prob = x[0].cpu().detach().numpy()
-    #     # ax.imshow(vis_prob[0, w//20:w-w//20, h//20:h-h//20], cmap="bwr")
-    #     ax.imshow(vis_prob[0, :, :], cmap="bwr")
-    #     plt.show()
-    #     # sys.exit()
     def test_forward(self, inp_img):
         '''
                     degradation to clean encoder
