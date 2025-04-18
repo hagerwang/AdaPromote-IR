@@ -1,6 +1,3 @@
-## AdaIR: Adaptive All-in-One Image Restoration via Frequency Mining and Modulation
-## Yuning Cui, Syed Waqas Zamir, Salman Khan, Alois Knoll, Mubarak Shah, and Fahad Shahbaz Khan
-## https://arxiv.org/abs/2403.14614
 import sys
 
 import torch
