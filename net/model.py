@@ -1,6 +1,3 @@
-## AdaIR: Adaptive All-in-One Image Restoration via Frequency Mining and Modulation
-## Yuning Cui, Syed Waqas Zamir, Salman Khan, Alois Knoll, Mubarak Shah, and Fahad Shahbaz Khan
-## https://arxiv.org/abs/2403.14614
 import sys
 
 import torch
@@ -333,9 +330,9 @@ class OverlapPatchEmbed(nn.Module):
 
 
 ##########################################################################
-##---------- DGIR -----------------------
+##---------- AdaPromoteIR -----------------------
 
-class DGIR(nn.Module):
+class AdaPromoteIR(nn.Module):
     def __init__(self,
         inp_channels=3,
         out_channels=3,
@@ -349,7 +346,7 @@ class DGIR(nn.Module):
         LayerNorm_type = 'WithBias',
         is_train = True
     ):
-        super(DGIR, self).__init__()
+        super(AdaPromoteIR, self).__init__()
         self.num_blocks = num_blocks
         # ddim, dl = 256, 24
         ddim, dl = dim*4, 72
