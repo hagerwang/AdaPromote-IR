@@ -105,18 +105,6 @@ def test_Denoise(net, dataset, sigma=15):
             degrad_patch, clean_patch = degrad_patch.cuda(), clean_patch.cuda()
 
             restored, masks, sims = net(degrad_patch)
-
-            # if sim_1 is not None:
-            #     sim_1 = sim_1 + torch.mean(sims[0].flatten(0,1),dim=0)
-            #     sim_1 /= 2
-            # else:
-            #     sim_1 = torch.mean(sims[0].flatten(-2,-1),dim=-1)
-
-            if sim_1 is not None:
-                sim_1 = torch.concat([sim_1, torch.mean(sims[0],dim=1)], dim=0)
-            else:
-                sim_1 = torch.mean(sims[0],dim=1)
-
             temp_psnr, temp_ssim, N = compute_psnr_ssim(restored, clean_patch)
 
             # save_mask(masks, output_path + clean_name[0])
@@ -128,25 +116,8 @@ def test_Denoise(net, dataset, sigma=15):
             # save_image_tensor(degrad_patch, output_path + clean_name[0] + '.png')
 
         print("Denoise sigma=%d: psnr: %.2f, ssim: %.4f" % (sigma, psnr.avg, ssim.avg))
-    draw_dr(sim_1)
     return psnr.avg, ssim.avg
 
-def draw_dr(sim):
-    # plt.rc('font',family='Times New Roman')
-    # sim = sim - torch.min(sim)
-    sim_array = sim.cpu().detach().numpy()
-    # x = range(len(sim_array))
-    # plt.bar(x, sim_array)
-    #
-    # plt.title("deraining")
-    # plt.xlim(-1,72)
-    # plt.savefig('sim.png')
-    # plt.close()
-    # print(sim_array.shape)
-    # print(sim_array.shape)
-
-    # np.savetxt("a.csv", sim_array, delimiter=",")
-    np.save("a.npy", sim_array)
 
 def test_Derain_Dehaze(net, dataset, task="derain"):
     output_path = testopt.output_path + task + '/'
@@ -168,7 +139,7 @@ def test_Derain_Dehaze(net, dataset, task="derain"):
             # sys.exit()
             _,_,oh,ow = degrad_patch.shape
             # s = 4
-            s = 2
+            s = 1
             if s == 1:
                 pass
             else:
@@ -191,19 +162,6 @@ def test_Derain_Dehaze(net, dataset, task="derain"):
                 sim_1 = torch.concat([sim_1, torch.mean(sims[0],dim=1)], dim=0)
             else:
                 sim_1 = torch.mean(sims[0],dim=1)
-
-
-            # print(sims[0].shape)
-            # restored, masks = net(restored)
-            # restored, masks = net(restored)
-            # restored, masks = net(restored)
-
-            # RA = 5
-            # restored = restored*RA + clean_patch
-            # restored = restored / (RA+1)
-
-
-            # save_image_tensor(degrad_patch, output_path + degraded_name[0] + '.png')
 
             temp_psnr, temp_ssim, N = compute_psnr_ssim(restored[:], clean_patch)
 
