@@ -103,8 +103,6 @@ conda env create -f env.yml
     |    |    |    |    |   |--1.png
     |    |    |    |    |   ...
 ```
-
-
 Dataset links (NOTE: The images of each dataset can be obtained from their official website.)
 
 Deraining: [Train100L&Rain100L](https://drive.google.com/drive/folders/1-_Tw-LHJF4vh8fpogKgZx1EQ9MhsJI_f?usp=sharing)
@@ -114,3 +112,16 @@ Dehazing: Train[ RESIDE](https://sites.google.com/view/reside-dehaze-datasets/re
 Deblur: [GoPro](https://drive.google.com/file/d/1y_wQ5G5B65HS_mdIjxKYTcnRys_AGh5v/view?usp=sharing)
 
 Enhance: [LOL-V1](https://daooshee.github.io/BMVC2018website/)
+
+## Training
+
+```
+python train.py
+```
+
+## Testing
+
+```
+python test.py --mode {n}
+```
+n is a number that can be used to set the tasks to be evaluated on, 0 for denoising, 1 for deraining, 2 for dehazing, 3 for deblurring, 4 for enhancement, 5 for three-degradation all-in-one setting and 6 for five-degradation all-in-one setting.
