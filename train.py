@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from utils.dataset_utils import AdaIRTrainDataset
-from net.model import DGIR
+from net.model import AdaPromoteIR
 from utils.schedulers import LinearWarmupCosineAnnealingLR
 import numpy as np
 # import wandb
@@ -14,7 +14,7 @@ from lightning.pytorch.loggers import WandbLogger,TensorBoardLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
 
 
-class DGIRModel(pl.LightningModule):
+class AdaPromoteIRModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.net = DGIR(is_train=True)
@@ -100,7 +100,7 @@ def main():
     trainloader = DataLoader(trainset, batch_size=opt.batch_size, pin_memory=True, shuffle=True,
                              drop_last=True, num_workers=opt.num_workers)
     
-    model = DGIRModel()
+    model = AdaPromoteIRModel()
     
     trainer = pl.Trainer( max_epochs=opt.epochs,accelerator="gpu",devices=opt.num_gpus,strategy="ddp_find_unused_parameters_true",logger=logger,callbacks=[checkpoint_callback])
     trainer.fit(model=model, train_dataloaders=trainloader)
