@@ -15,7 +15,7 @@ import lightning.pytorch as pl
 from utils.dataset_utils import DenoiseTestDataset, DerainDehazeDataset
 from utils.val_utils import AverageMeter, compute_psnr_ssim
 from utils.image_io import save_image_tensor
-from net.model import DGIR
+from net.model import AdaPromoteIR
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
     print("CKPT name : {}".format(ckpt_path))
 
-    net  = DGIRModel.load_from_checkpoint(ckpt_path, strict=False).cuda()
+    net  = AdaPromoteIRModel.load_from_checkpoint(ckpt_path, strict=False).cuda()
     net.eval()
 
     if testopt.mode == 0:
