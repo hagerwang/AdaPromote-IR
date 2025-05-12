@@ -46,8 +46,8 @@ parser.add_argument('--dehaze_dir', type=str, default='data/Train/Dehaze/',
                     help='where training images of dehazing saves.')
 parser.add_argument('--output_path', type=str, default="output/", help='output save path')
 parser.add_argument('--ckpt_path', type=str, default="ckpt/Denoise/", help='checkpoint save path')
-parser.add_argument("--wblogger",type=str,default="AdaIR",help = "Determine to log to wandb or not and the project name")
-parser.add_argument("--ckpt_dir",type=str,default="AdaIR",help = "Name of the Directory where the checkpoint is to be saved")
+parser.add_argument("--wblogger",type=str,default="AdaPromoteIR",help = "Determine to log to wandb or not and the project name")
+parser.add_argument("--ckpt_dir",type=str,default="AdaPromoteIR",help = "Name of the Directory where the checkpoint is to be saved")
 parser.add_argument("--num_gpus",type=int,default= 2, help = "Number of GPUs to use for training")
 
 options = parser.parse_args()
